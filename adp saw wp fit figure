@@ -1,0 +1,103 @@
+WP 
+function hasil_Callback(hObject, eventdata, handles)
+c1 = str2double(get(handles.c1, 'String'));
+c2 = str2double(get(handles.c2, 'String'));
+c3 = str2double(get(handles.c3, 'String'));
+c4 = str2double(get(handles.c4, 'String'));
+c5 = str2double(get(handles.c4, 'String'));
+ 
+bobot = [c1 c2 c3 c4 c5]; %dari soal yang persenan itu 
+k = [-1, 1, 1, -1, 1]; %1 kalo benefit -1 kalo cost
+dataTable = get(handles.data, 'Data'); %ngambil data dari table
+dataTable = dataTable(:, 1:5) %ini gausah dikasi ; ya inget
+dataTable = cell2mat(dataTable); %ngubah cell ke mat
+disp('dataTable');
+bobot = bobot./sum(bobot);
+disp('bobot');
+disp(bobot); %cek apa udah sesuai sama hitungan manualmu 
+
+[m n] = size(dataTable);
+R = zeros(m, n);
+skor = zeros(m, 1);
+for j = 1:n,
+    %ini teorinya lupa nanti balik lagi ya maniezku 
+    if k(j)==1
+        R(:, j)= dataTable(:, j)./max(dataTable(:, j));
+    else 
+        R(:, j)= min(dataTable(:, j))./dataTable(:, j);
+    end
+end
+disp('Hasil normalisasi matriks');
+disp(R);
+
+%PERANGKINGAN 
+for i = 1:m
+    skor(i)= sum(bobot.*R(i, :)); %ngitung apa hayo, pahamin ya nanti 
+end 
+disp('skor');
+disp(skor);
+skor = num2cell(skor); %ini jangan sampe lupa, biar dia sama sama cell sama data nanti
+disp('skor');
+disp(skor);
+ 
+%HASIL AKHIR
+data = readtable('Housing_CA.csv');
+data = table2cell(data); %jangan lupa diganti dlu.. 
+rumah = data(:, 1:5); 
+ 
+%buat nyari siapa yang paling besar skornya 
+data = [skor, rumah];
+[maxSkor, idx] = max(cell2mat(skor));
+
+rumah = rumah(idx, 1:5);
+skormaks = maxSkor;
+ 
+set(handles.final, 'Data', rumah);
+
+SAW
+function rekomendasi_Callback(hObject, eventdata, handles)
+%NGAMBIL DATA DARI XLSX
+c1 = str2double(get(handles.lb, 'String'));
+c2 = str2double(get(handles.lt, 'String'));
+c3 = str2double(get(handles.kt, 'String'));
+c4 = str2double(get(handles.km, 'String'));
+c5 = str2double(get(handles.grs, 'String'));
+c6 = str2double(get(handles.harga, 'String'));
+bobot = [c1 c2 c3 c4 c5 c6]; %dari soal yang persenan itu 
+k = [1, 1, 1, 1, 1, 0]; %1 kalo benefit -1 kalo cost
+dataTable = get(handles.tabeldata, 'Data'); %ngambil data dari table
+dataTable = dataTable(:, 2:7) %sesuai urutan tabel GUI
+dataTable = cell2mat(dataTable); %ngubah cell ke mat
+disp('dataTable');
+disp(dataTable);
+[m, n] = size(dataTable);
+bobot = bobot ./ sum(bobot);
+ % Menyesuaikan bobot untuk kriteria cost
+for j = 1:n
+    if k(j) == -1
+        bobot(j) = -1 * bobot(j);
+    end
+end
+% Menghitung nilai S
+S = zeros(m, 1);
+for i = 1:m
+    S(i) = prod(dataTable(i, :) .^ bobot);
+end
+disp('Nilai S:');
+disp(S);
+ 
+% Menghitung skor akhir
+skor = S / sum(S);
+disp('Skor Akhir:');
+disp(skor);
+ 
+% Menggabungkan skor dengan data rumah
+data = readtable('data_rumah.xlsx');
+data = table2cell(data); 
+rumah = data(:, 2:8); 
+hasil = [num2cell(skor), rumah];
+hasil = sortrows(hasil, -1);
+ 
+% Menampilkan hasil terbaik
+rumah = rumah(1, :);
+set(handles.tabelrekomendasi, 'Data', rumah);
